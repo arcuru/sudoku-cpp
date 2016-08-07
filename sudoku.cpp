@@ -9,6 +9,7 @@
 #include <iomanip>
 #include <chrono>
 #include <array>
+#include <set>
 
 using namespace std;
 
@@ -85,8 +86,10 @@ class Board {
             return *this;
         }
 
-        size_t totalCount() const;
+        bool solve();
+
         bool isSolved() const;
+        bool isSolvedDebug() const;
 
         bool assign(size_t cell, size_t val);
         bool remove(size_t cell, size_t val);
@@ -153,14 +156,6 @@ Board::Board(const string& inp) : Board()
     }
 }
 
-size_t Board::totalCount() const
-{
-    size_t sum = 0;
-    for (auto c : _cells)
-        sum += c.count();
-    return sum;
-}
-
 /**
  * Checks to see if the board is solved
  *
@@ -171,6 +166,26 @@ bool Board::isSolved() const
     for (auto c : _cells)
         if (c.count() != 1)
             return false;
+    return true;
+}
+
+/**
+ * Checks to see if the board is solved according to Sudoku rules
+ *
+ * @return  True if solved
+ */
+bool Board::isSolvedDebug() const
+{
+    if (!isSolved())
+        return false;
+    for (auto& vec : groups) {
+        // Check cells in vec for uniqueness
+        set<size_t> check;
+        for (size_t i : vec)
+            check.insert(_cells[i].val());
+        if (check.size() != 9)
+            return false;
+    }
     return true;
 }
 
@@ -278,24 +293,27 @@ vector<size_t> Board::options(size_t index) const
     return ret;
 }
 
-void solve(Board& target)
+bool Board::solve()
 {
-    if (target.isSolved())
-        return;
+    if (this->isSolved())
+        return true;
 
     // Place a guess at the smallest unsolved place
-    size_t i = target.smallest();
-    for (size_t j : target.options(i)) {
-        // Copy to new board, guess and solve
-        Board cop(target);
+    size_t i = this->smallest();
+    F(j) {
+        if (!_cells[i].isSet(j))
+            continue;
+
+        // Create copy
+        Board cop(*this);
         if (cop.assign(i, j)) {
-            solve(cop);
-            if (cop.isSolved()) {
-                target = cop;
-                return;
+            if (cop.solve()) {
+                swap(*this, cop);
+                return true;
             }
         }
     }
+    return false;
 }
 
 int main(int argc, char* argv[])
@@ -319,7 +337,8 @@ int main(int argc, char* argv[])
 
         // Create Board from line
         Board x(line);
-        solve(x);
+        //solve(x);
+        x.solve();
 
         // Stop timer
         auto end_time = high_resolution_clock::now();
@@ -327,14 +346,9 @@ int main(int argc, char* argv[])
         time_span = duration_cast<duration<double>>(end_time-start_time);
         timings.push_back(time_span.count());
 
-        if (!x.isSolved()) {
+        if (!x.isSolvedDebug()) {
             cout << "Impossible Problem." << endl;
             cout << "Took " << time_span.count() << " seconds." << endl;
-        }
-
-        if (x.totalCount() != 81) {
-            cout << x.totalCount() << " - ";
-            cout << "Liar!" << endl;
         }
     }
 
