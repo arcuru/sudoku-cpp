@@ -156,7 +156,7 @@ Board::Board(const string& inp) : Board()
 size_t Board::totalCount() const
 {
     size_t sum = 0;
-    for (const auto& c : _cells)
+    for (auto c : _cells)
         sum += c.count();
     return sum;
 }
@@ -215,13 +215,7 @@ bool Board::remove(size_t cell, size_t val)
         // This cell now has 1 value
         // Loop through every neighbor and remove that val
 
-        size_t i = SIZE_MAX;
-        F(n) {
-            if (c.isSet(n)) {
-                i = n;
-                break;
-            }
-        }
+        size_t i = c.val();
 
         for (size_t n : belong_to[cell])
             for (size_t x : groups[n])
@@ -233,7 +227,7 @@ bool Board::remove(size_t cell, size_t val)
     // For every group that this cell is a part of, loop through each cell.
     // Checking to see if 'val' is unique in any group. If it is, assign it.
     for (size_t n : belong_to[cell]) {
-        if (1 == --group_counts[n][val-1]) {
+        if (1 == --group_counts[n][val-1]) { // group_counts indexed by val-1
             for (size_t x : groups[n]) {
                 if (_cells[x].isSet(val)) {
                     if (!assign(x, val))
@@ -248,15 +242,11 @@ bool Board::remove(size_t cell, size_t val)
 
 void Board::printDebug() const
 {
-    for (const auto x : _cells) {
-        if (x.count() == 1) {
-            F(i)
-                if (x.isSet(i))
-                    cout << i;
-        }
-        else {
+    for (auto x : _cells) {
+        if (x.count() == 1)
+            cout << x.val();
+        else
             cout << (char)('A' + x.count());
-        }
     }
     cout << endl;
 }
@@ -265,7 +255,7 @@ size_t Board::smallest() const
 {
     size_t i;
     size_t min = SIZE_MAX;
-    size_t mini = 82;
+    size_t mini = _cells.size(); // Intentionally invalid
     for (i = 0; i < _cells.size(); ++i) {
         if (_cells[i].count() == 1)
             continue;
@@ -277,6 +267,7 @@ size_t Board::smallest() const
     return mini;
 }
 
+// TODO: This should be builtin of Cell
 vector<size_t> Board::options(size_t index) const
 {
     vector<size_t> ret;
