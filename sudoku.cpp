@@ -215,7 +215,7 @@ bool Board::remove(size_t cell, size_t val)
         // This cell now has 1 value
         // Loop through every neighbor and remove that val
 
-        size_t i;
+        size_t i = SIZE_MAX;
         F(n) {
             if (c.isSet(n)) {
                 i = n;
