@@ -10,6 +10,7 @@
 #include <chrono>
 #include <array>
 #include <set>
+#include <cassert>
 
 using namespace std;
 
@@ -65,12 +66,18 @@ class Board {
         static vector<vector<size_t>> groups, belong_to;
         void initGroups();
 
+        bool assign(size_t cell, size_t val);
+        bool remove(size_t cell, size_t val);
+
+        size_t smallest() const;
+
     public:
         Board() : _cells(81)
         {
             Board::initGroups();
             group_counts.insert(group_counts.begin(), groups.size(), vector<uint8_t>{9,9,9,9,9,9,9,9,9});
         }
+
         Board(const string& inp);
 
         friend void swap(Board& lhs, Board& rhs)
@@ -90,15 +97,6 @@ class Board {
 
         bool isSolved() const;
         bool isSolvedDebug() const;
-
-        bool assign(size_t cell, size_t val);
-        bool remove(size_t cell, size_t val);
-
-        size_t smallest() const;
-        vector<size_t> options(size_t index) const;
-
-        Cell getCell(size_t i) const
-        { return _cells[i]; }
 
         void printDebug() const;
 };
@@ -147,7 +145,7 @@ Board::Board(const string& inp) : Board()
     size_t i = 0;
     for (char c : inp) {
         if (c >= '1' && c <= '9') { // Make sure to convert to zero-indexed
-            if (!assign(i++, c - '0' - 1)) {
+            if (!assign(i++, c - '1')) {
                 return;
             }
         }
@@ -198,14 +196,12 @@ bool Board::isSolvedDebug() const
  */
 bool Board::assign(size_t cell, size_t val)
 {
-    if (!_cells[cell].isSet(val))
-        return false;
+    assert( _cells[cell].isSet(val) );
     F(i) {
-        if (i != val) {
-            if (!remove(cell, i)) {
-                return false;
-            }
-        }
+        if (i == val)
+            continue;
+        if (!remove(cell, i))
+            return false;
     }
     return true;
 }
@@ -229,27 +225,33 @@ bool Board::remove(size_t cell, size_t val)
     if (c.count() == 1) {
         // This cell now has 1 value
         // Loop through every neighbor and remove that val
+        // Keeping this here instead of in assign() removes code duplication
 
         size_t i = c.val();
 
-        for (size_t n : belong_to[cell])
-            for (size_t x : groups[n])
-                if (x != cell)
-                    if (!remove(x, i))
-                        return false;
+        for (size_t n : belong_to[cell]) {
+            for (size_t x : groups[n]) {
+                if (x == cell)
+                    continue;
+                if (!remove(x, i))
+                    return false;
+            }
+        }
     }
 
     // For every group that this cell is a part of, loop through each cell.
     // Checking to see if 'val' is unique in any group. If it is, assign it.
     for (size_t n : belong_to[cell]) {
-        if (1 == --group_counts[n][val]) {
-            for (size_t x : groups[n]) {
-                if (_cells[x].isSet(val)) {
-                    if (!assign(x, val))
-                        return false;
-                    break;
-                }
-            }
+        if (--group_counts[n][val] != 1)
+            continue;
+
+        // Find where that value is and set it
+        for (size_t x : groups[n]) {
+            if (!_cells[x].isSet(val))
+                continue;
+            if (!assign(x, val))
+                return false;
+            break;// Only one in group
         }
     }
     return true;
@@ -280,17 +282,6 @@ size_t Board::smallest() const
         }
     }
     return mini;
-}
-
-// TODO: This should be builtin of Cell
-vector<size_t> Board::options(size_t index) const
-{
-    vector<size_t> ret;
-    F(i) {
-        if (_cells[index].isSet(i))
-            ret.push_back(i);
-    }
-    return ret;
 }
 
 bool Board::solve()
