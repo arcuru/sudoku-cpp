@@ -12,7 +12,7 @@
 
 using namespace std;
 
-#define F(i)  for(size_t i = 1; i <= Cell::max; ++i)
+#define F(i)  for(size_t i = 0; i < Cell::max; ++i)
 
 
 /**
@@ -34,12 +34,12 @@ class Cell {
 
         bool isSet(uint8_t i) const
         {
-            return _bits[i-1];
+            return _bits[i];
         }
 
         void remove(uint8_t i)
         {
-            _bits[i-1] = false;
+            _bits[i] = false;
         }
 
         size_t val() const
@@ -143,8 +143,8 @@ Board::Board(const string& inp) : Board()
     initGroups();
     size_t i = 0;
     for (char c : inp) {
-        if (c >= '1' && c <= '9') {
-            if (!assign(i++, c - '0')) {
+        if (c >= '1' && c <= '9') { // Make sure to convert to zero-indexed
+            if (!assign(i++, c - '0' - 1)) {
                 return;
             }
         }
@@ -227,7 +227,7 @@ bool Board::remove(size_t cell, size_t val)
     // For every group that this cell is a part of, loop through each cell.
     // Checking to see if 'val' is unique in any group. If it is, assign it.
     for (size_t n : belong_to[cell]) {
-        if (1 == --group_counts[n][val-1]) { // group_counts indexed by val-1
+        if (1 == --group_counts[n][val]) {
             for (size_t x : groups[n]) {
                 if (_cells[x].isSet(val)) {
                     if (!assign(x, val))
@@ -244,7 +244,7 @@ void Board::printDebug() const
 {
     for (auto x : _cells) {
         if (x.count() == 1)
-            cout << x.val();
+            cout << x.val()+1;
         else
             cout << (char)('A' + x.count());
     }
