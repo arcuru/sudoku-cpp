@@ -8,17 +8,17 @@
 #include <algorithm>
 #include <iomanip>
 #include <chrono>
-#include <array>
 #include <set>
 #include <cassert>
 
 using namespace std;
 
-#define F(i)  for(size_t i = 0; i < Cell::max; ++i)
+#define F(i)  for(size_t i = 0; i < Cell::size(); ++i)
 
 
 /**
  * Class to hold the value for a single cell in the puzzle
+ * Very simple wrapper around bitset<> for readability
  */
 class Cell {
     private:
@@ -26,8 +26,6 @@ class Cell {
 
     public:
         Cell() : _bits(0x1FF) {}
-
-        Cell(const Cell& other) : _bits(other._bits) {}
 
         size_t count() const
         {
@@ -49,14 +47,14 @@ class Cell {
             F(i) 
                 if (isSet(i))
                     return i;
-            return max;
+            return size();
         }
 
-        static const size_t max;
-
+        static size_t size()
+        {
+            return 9;
+        }
 };
-
-const size_t Cell::max = 9;
 
 class Board {
     private:
@@ -291,6 +289,7 @@ bool Board::solve()
 
     // Place a guess at the smallest unsolved place
     size_t i = this->smallest();
+    //for (size_t j = 0; j < _cells[i].size(); ++j) {
     F(j) {
         if (!_cells[i].isSet(j))
             continue;
