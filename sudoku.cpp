@@ -32,19 +32,19 @@ class Cell {
             return _bits.count();
         }
 
-        bool isSet(uint8_t i) const
+        bool isSet(size_t i) const
         {
             return _bits[i];
         }
 
-        void remove(uint8_t i)
+        void remove(size_t i)
         {
             _bits[i] = false;
         }
 
         size_t val() const
         {
-            F(i) 
+            F(i)
                 if (isSet(i))
                     return i;
             return size();
@@ -70,26 +70,8 @@ class Board {
         size_t smallest() const;
 
     public:
-        Board() : _cells(81)
-        {
-            Board::initGroups();
-            group_counts.insert(group_counts.begin(), groups.size(), vector<uint8_t>{9,9,9,9,9,9,9,9,9});
-        }
 
-        Board(const string& inp);
-
-        friend void swap(Board& lhs, Board& rhs)
-        {
-            using std::swap;
-            swap(lhs.group_counts, rhs.group_counts);
-            swap(lhs._cells, rhs._cells);
-        }
-
-        Board& operator=(Board other)
-        {
-            swap(*this, other);
-            return *this;
-        }
+        explicit Board(const string& inp);
 
         bool solve();
 
@@ -137,13 +119,15 @@ void Board::initGroups()
     }
 }
 
-Board::Board(const string& inp) : Board()
+Board::Board(const string& inp) : _cells(81)
 {
     initGroups();
+    group_counts.insert(group_counts.begin(), groups.size(), vector<uint8_t>{9,9,9,9,9,9,9,9,9});
+
     size_t i = 0;
     for (char c : inp) {
         if (c >= '1' && c <= '9') { // Make sure to convert to zero-indexed
-            if (!assign(i++, c - '1')) {
+            if (!assign(i++, static_cast<size_t>(c - '1'))) {
                 return;
             }
         }
@@ -261,7 +245,7 @@ void Board::printDebug() const
         if (x.count() == 1)
             cout << x.val()+1;
         else
-            cout << (char)('A' + x.count());
+            cout << static_cast<char>('A' + x.count());
     }
     cout << endl;
 }
@@ -306,7 +290,7 @@ bool Board::solve()
     return false;
 }
 
-int main(int argc, char* argv[])
+int main()
 {
     string line;
     size_t problems = 0;
@@ -347,7 +331,7 @@ int main(int argc, char* argv[])
 
     cout << "Solved " << problems << " Sudoku boards." << endl;
     cout << "Total Time: " << time_span.count() << endl;
-    cout << "Solve Time: " << accumulate(timings.begin(), timings.end(), (double)0) << endl;
+    cout << "Solve Time: " << accumulate(timings.begin(), timings.end(), static_cast<double>(0)) << endl;
     cout << "Avg Time:   " << time_span.count() / problems << endl;
     cout << "Max Time:   " << *max_element(timings.begin(), timings.end()) << endl;
     cout << "Min Time:   " << *min_element(timings.begin(), timings.end()) << endl;
