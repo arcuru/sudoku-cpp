@@ -10,6 +10,7 @@
 #include <chrono>
 #include <set>
 #include <cassert>
+#include <numeric>
 
 using namespace std;
 
